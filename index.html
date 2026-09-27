@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Animasi Kode Loop</title>
+<style>
+:root{
+  --bg:#14131f;--panel:#1c1a2b;--panel-2:#221f36;--line:#332f4d;
+  --accent:#f2b705;--accent-dim:rgba(242,183,5,.15);
+  --text:#eae6f5;--muted:#8b87a3;--good:#5fd88f;--bad:#f2705f;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#f5f3ef;--panel:#fff;--panel-2:#f0eee8;--line:#e2ddd0;
+    --accent:#b8790a;--accent-dim:rgba(184,121,10,.12);
+    --text:#221f2e;--muted:#726d80;--good:#1f8a53;--bad:#c73f2b;
+  }
+}
+:root[data-theme="dark"]{--bg:#14131f;--panel:#1c1a2b;--panel-2:#221f36;--line:#332f4d;--accent:#f2b705;--accent-dim:rgba(242,183,5,.15);--text:#eae6f5;--muted:#8b87a3;--good:#5fd88f;--bad:#f2705f;}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*{box-sizing:border-box;}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",-apple-system,Segoe UI,sans-serif;padding:26px 18px 40px;}
+.wrap{max-width:980px;margin:0 auto;}
+h1{font-family:"IBM Plex Mono",monospace;font-size:clamp(20px,4vw,28px);margin:0 0 6px;letter-spacing:-.01em;}
+header p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.5;max-width:70ch;}
+.editorRow{display:grid;grid-template-columns:1fr auto;gap:10px;margin:18px 0 10px;align-items:end;}
+select,textarea{font-family:"IBM Plex Mono",monospace;background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px 10px;font-size:13px;}
+textarea{width:100%;min-height:170px;resize:vertical;line-height:1.6;}
+select{height:34px;}
+.runBtn{white-space:nowrap;}
+.controls{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin:14px 0 18px;padding:12px 14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;}
+button{font-family:"IBM Plex Sans",sans-serif;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--panel-2);color:var(--text);padding:8px 14px;border-radius:6px;cursor:pointer;}
+button:hover{border-color:var(--accent);}
+button:disabled{opacity:.4;cursor:not-allowed;}
+button.primary{background:var(--accent);color:#1c1a2b;border-color:var(--accent);}
+.controls .spacer{flex:1;}
+.step-count{font-size:12.5px;color:var(--muted);font-family:"IBM Plex Mono",monospace;white-space:nowrap;}
+.errBox{display:none;background:var(--bad);color:#fff;font-family:"IBM Plex Mono",monospace;font-size:12.5px;padding:9px 13px;border-radius:8px;margin:0 0 14px;}
+.panels{display:grid;grid-template-columns:1.15fr 1fr;gap:16px;}
+@media (max-width:760px){.panels{grid-template-columns:1fr;}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+.card h2{font-size:11px;color:var(--muted);margin:0;padding:9px 14px;border-bottom:1px solid var(--line);font-family:"IBM Plex Mono",monospace;}
+.code{font-family:"IBM Plex Mono",monospace;font-size:13px;line-height:1.85;padding:8px 0;overflow-x:auto;max-height:340px;overflow-y:auto;}
+.code .row{display:flex;white-space:pre;border-left:3px solid transparent;}
+.code .row.active{background:var(--accent-dim);border-left-color:var(--accent);}
+.code .ln{width:28px;flex:none;color:var(--muted);text-align:right;padding-right:10px;user-select:none;}
+.code .tx{padding-right:14px;}
+.vartable{width:100%;border-collapse:collapse;font-family:"IBM Plex Mono",monospace;font-size:13px;}
+.vartable th{text-align:left;font-weight:600;color:var(--muted);font-size:11px;padding:7px 14px;border-bottom:1px solid var(--line);}
+.vartable td{padding:7px 14px;border-bottom:1px solid var(--line);color:var(--accent);font-weight:600;}
+.note{padding:11px 14px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);min-height:18px;}
+.output{font-family:"IBM Plex Mono",monospace;font-size:13.5px;line-height:1.55;padding:13px 15px;white-space:pre;min-height:140px;color:var(--good);max-height:200px;overflow:auto;}
+.cursor{display:inline-block;width:8px;height:14px;background:var(--good);vertical-align:-2px;animation:blink 1s steps(1) infinite;}
+@keyframes blink{50%{opacity:0;}}
+footer{margin-top:24px;font-size:11.5px;color:var(--muted);text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1>Animasi Kode Loop</h1>
+<p>Tulis kode Anda sendiri (gaya Java sederhana: <code>for</code>, <code>if</code>, <code>print</code>/<code>println</code>), lalu jalankan untuk melihatnya dieksekusi langkah demi langkah, lengkap dengan nilai variabel dan output yang terbentuk.</p>
+</header>
+
+<div class="editorRow">
+  <textarea id="codeInput" spellcheck="false"></textarea>
+  <div style="display:flex;flex-direction:column;gap:8px;">
+    <select id="exampleSel">
+      <option value="">Contoh kode&hellip;</option>
+      <option value="tri">Segitiga bintang</option>
+      <option value="inv">Segitiga terbalik</option>
+      <option value="table">Tabel perkalian</option>
+    </select>
+    <button class="primary runBtn" id="runBtn">Jalankan ▶</button>
+  </div>
+</div>
+<div class="errBox" id="errBox"></div>
+
+<div class="controls">
+  <button id="startBtn" class="primary">Start Animation</button>
+  <button id="resetBtn">Reset</button>
+  <button id="prevBtn">◀ Prev</button>
+  <button id="nextBtn">Next ▶</button>
+  <div class="spacer"></div>
+  <span class="step-count" id="stepCount">Langkah 0 / 0</span>
+</div>
+
+<div class="panels">
+  <div class="card">
+    <h2>Kode</h2>
+    <div class="code" id="codeView"></div>
+    <div class="note" id="noteBox">Klik "Jalankan" untuk mulai memproses kode.</div>
+  </div>
+  <div class="card">
+    <h2>Variabel</h2>
+    <table class="vartable"><thead><tr id="varHead"></tr></thead><tbody><tr id="varRow"></tr></tbody></table>
+    <h2 style="border-top:1px solid var(--line);">Output</h2>
+    <div class="output" id="outputBox"><span class="cursor"></span></div>
+  </div>
+</div>
+<footer>Tulis kode di kotak atas, jalankan, lalu telusuri langkah demi langkah dengan Next/Prev atau Start Animation.</footer>
+</div>
+
+<script>
+(function(){
+  const codeInput=document.getElementById('codeInput'), exampleSel=document.getElementById('exampleSel');
+  const runBtn=document.getElementById('runBtn'), errBox=document.getElementById('errBox');
+  const startBtn=document.getElementById('startBtn'), resetBtn=document.getElementById('resetBtn');
+  const prevBtn=document.getElementById('prevBtn'), nextBtn=document.getElementById('nextBtn');
+  const stepCount=document.getElementById('stepCount'), noteBox=document.getElementById('noteBox');
+  const codeView=document.getElementById('codeView'), varHead=document.getElementById('varHead');
+  const varRow=document.getElementById('varRow'), outputBox=document.getElementById('outputBox');
+
+  const examples={
+    tri:'int n = 5;\nfor (int i = 1; i <= n; i++) {\n  for (int j = 1; j <= i; j++) {\n    print("*");\n  }\n  println();\n}',
+    inv:'int n = 5;\nfor (int i = n; i >= 1; i--) {\n  for (int j = 1; j <= i; j++) {\n    print("*");\n  }\n  println();\n}',
+    table:'int n = 5;\nfor (int i = 1; i <= n; i++) {\n  for (int j = 1; j <= n; j++) {\n    print(i * j + "\\t");\n  }\n  println();\n}'
+  };
+  codeInput.value=examples.tri;
+  exampleSel.addEventListener('change',()=>{ if(exampleSel.value){ codeInput.value=examples[exampleSel.value]; exampleSel.value=''; } });
+
+  // ---------- parser ----------
+  function parseProgram(src){
+    let i=0; const n=src.length;
+    const lineAt=p=>src.slice(0,p).split('\n').length;
+    function skipWs(){ while(i<n){ if(/\s/.test(src[i])) i++; else if(src[i]==='/'&&src[i+1]==='/'){ while(i<n&&src[i]!=='\n') i++; } else break; } }
+    function starts(str){ skipWs(); return src.startsWith(str,i); }
+    function consume(str){ skipWs(); if(!src.startsWith(str,i)) throw new Error('Diharapkan "'+str+'" pada baris '+lineAt(i)); i+=str.length; }
+    function matchKw(...kws){ skipWs(); for(const k of kws){ if(new RegExp('^'+k+'\\b').test(src.slice(i))){ i+=k.length; return k; } } return null; }
+    function readUntil(chars){
+      let start=i, depth=0;
+      while(i<n){
+        const c=src[i];
+        if(c==='"'||c==="'"){ const q=c; i++; while(i<n&&src[i]!==q){ if(src[i]==='\\')i++; i++; } i++; continue; }
+        if(c==='('){ depth++; i++; continue; }
+        if(c===')'){ if(depth===0) break; depth--; i++; continue; }
+        if(depth===0 && chars.includes(c)) break;
+        i++;
+      }
+      return src.slice(start,i);
+    }
+    function parseBlock(){
+      skipWs();
+      if(src[i]==='{'){ i++; const st=[]; skipWs(); while(i<n&&src[i]!=='}'){ st.push(parseStatement()); skipWs(); } consume('}'); return st; }
+      return [parseStatement()];
+    }
+    function parseStatement(){
+      skipWs(); const ln=lineAt(i);
+      if(matchKw('for')){
+        consume('('); const initTxt=readUntil(';').trim(); consume(';');
+        const condTxt=readUntil(';').trim(); consume(';');
+        const updTxt=readUntil(')').trim(); consume(')');
+        const body=parseBlock();
+        return {type:'for', line:ln, initTxt, condTxt, updTxt, body};
+      }
+      if(matchKw('if')){
+        consume('('); const condTxt=readUntil(')').trim(); consume(')');
+        const thenB=parseBlock(); let elseB=null;
+        const save=i; skipWs();
+        if(matchKw('else')){ elseB=parseBlock(); } else { i=save; }
+        return {type:'if', line:ln, condTxt, thenB, elseB};
+      }
+      const txt=readUntil(';').trim(); consume(';');
+      const pm=/^(System\.out\.println|System\.out\.print|println|print)\s*\((.*)\)$/s.exec(txt);
+      if(pm) return {type:'print', line:ln, exprTxt:pm[2], newline:/println$/.test(pm[1])};
+      return {type:'stmt', line:ln, text:txt};
+    }
+    const stmts=[]; skipWs();
+    while(i<n){ stmts.push(parseStatement()); skipWs(); }
+    return stmts;
+  }
+
+  // ---------- evaluation helpers ----------
+  function stripType(t){ return t.replace(/^(int|double|long|float|String|boolean|char|var)\s+/,''); }
+  function execRawStatement(rawText, env){
+    const text=stripType(rawText.trim()); if(!text) return;
+    const dm=/^([A-Za-z_]\w*)\s*=/.exec(text);
+    if(dm && !(dm[1] in env)) env[dm[1]]=undefined;
+    const keys=Object.keys(env);
+    const body='let {'+keys.join(',')+'} = env;\n'+text+';\nreturn {'+keys.join(',')+'};';
+    const updated=new Function('env', body)(env);
+    Object.assign(env, updated);
+  }
+  function evalExpr(exprTxt, env){
+    const t=exprTxt.trim(); if(t==='') return '';
+    const keys=Object.keys(env);
+    return new Function(...keys, 'return ('+t+');')(...keys.map(k=>env[k]));
+  }
+
+  // ---------- generator-based tracer ----------
+  function* execStatements(stmts, env){ for(const s of stmts) yield* execStmt(s, env); }
+  function* execStmt(s, env){
+    if(s.type==='stmt'){ execRawStatement(s.text, env); yield {line:s.line, note:'Menjalankan: '+s.text}; }
+    else if(s.type==='print'){
+      const val = s.exprTxt.trim()==='' ? '' : String(evalExpr(s.exprTxt, env));
+      yield {line:s.line, note:(s.newline?'println() → baris baru':'print → "'+val+'"'), output: val+(s.newline?'\n':'')};
+    } else if(s.type==='for'){
+      execRawStatement(s.initTxt, env);
+      yield {line:s.line, note:'Inisialisasi: '+s.initTxt};
+      while(true){
+        const cond=evalExpr(s.condTxt, env);
+        yield {line:s.line, note:'Cek kondisi '+s.condTxt+' → '+(cond?'benar':'salah')};
+        if(!cond) break;
+        yield* execStatements(s.body, env);
+        execRawStatement(s.updTxt, env);
+        yield {line:s.line, note:'Update: '+s.updTxt};
+      }
+    } else if(s.type==='if'){
+      const cond=evalExpr(s.condTxt, env);
+      yield {line:s.line, note:'Cek if '+s.condTxt+' → '+(cond?'benar':'salah')};
+      if(cond) yield* execStatements(s.thenB, env); else if(s.elseB) yield* execStatements(s.elseB, env);
+    }
+  }
+  function trace(ast){
+    const steps=[], env={}; let output=''; const gen=execStatements(ast, env); let guard=0;
+    for(const ev of gen){
+      if(ev.output) output+=ev.output;
+      steps.push({line:ev.line, note:ev.note, vars:{...env}, output});
+      if(++guard>4000){ steps.push({line:null, note:'Berhenti: terlalu banyak langkah (kemungkinan infinite loop).', vars:{...env}, output}); break; }
+    }
+    return steps;
+  }
+
+  // ---------- state / UI ----------
+  let steps=[], idx=-1, timer=null, sourceLines=[], varCols=[];
+
+  function buildCodeView(){
+    codeView.innerHTML='';
+    sourceLines.forEach((ln,i)=>{
+      const row=document.createElement('div'); row.className='row'; row.dataset.line=i+1;
+      const num=document.createElement('span'); num.className='ln'; num.textContent=i+1;
+      const tx=document.createElement('span'); tx.className='tx'; tx.textContent=ln;
+      row.appendChild(num); row.appendChild(tx); codeView.appendChild(row);
+    });
+  }
+  function buildVarCols(){
+    const seen=[]; steps.forEach(s=>Object.keys(s.vars).forEach(k=>{ if(!seen.includes(k)) seen.push(k); }));
+    varCols=seen;
+    varHead.innerHTML=varCols.map(k=>'<th>'+k+'</th>').join('') || '<th>&ndash;</th>';
+  }
+  function run(){
+    stopPlay(); errBox.style.display='none';
+    try{
+      const src=codeInput.value; sourceLines=src.split('\n');
+      const ast=parseProgram(src);
+      steps=trace(ast); idx=-1; buildCodeView(); buildVarCols(); render();
+    }catch(e){
+      steps=[]; idx=-1; sourceLines=codeInput.value.split('\n'); buildCodeView(); varHead.innerHTML='';
+      errBox.textContent='Error: '+e.message; errBox.style.display='block'; render();
+    }
+  }
+  function render(){
+    document.querySelectorAll('.code .row').forEach(r=>r.classList.remove('active'));
+    if(idx<0){
+      noteBox.textContent = steps.length? 'Siap. Tekan Next atau Start Animation.' : 'Klik "Jalankan" untuk mulai memproses kode.';
+      varRow.innerHTML = varCols.map(()=>'<td>&ndash;</td>').join('');
+      outputBox.innerHTML='<span class="cursor"></span>';
+      stepCount.textContent='Langkah 0 / '+steps.length;
+      prevBtn.disabled=true; nextBtn.disabled=steps.length===0; startBtn.disabled=steps.length===0;
+      return;
+    }
+    const st=steps[idx];
+    if(st.line){ const row=document.querySelector('.code .row[data-line="'+st.line+'"]'); if(row) row.classList.add('active'); row&&row.scrollIntoView({block:'nearest'}); }
+    noteBox.textContent=st.note;
+    varRow.innerHTML = varCols.map(k=>'<td>'+(st.vars[k]===undefined?'&ndash;':st.vars[k])+'</td>').join('');
+    outputBox.innerHTML = st.output.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'<span class="cursor"></span>';
+    stepCount.textContent='Langkah '+(idx+1)+' / '+steps.length;
+    prevBtn.disabled=idx<=0; nextBtn.disabled=idx>=steps.length-1;
+    if(idx>=steps.length-1) stopPlay();
+  }
+  function next(){ if(idx<steps.length-1){ idx++; render(); } else stopPlay(); }
+  function prev(){ if(idx>0){ idx--; render(); } }
+  function stopPlay(){ if(timer){ clearInterval(timer); timer=null; } startBtn.textContent='Start Animation'; }
+  function togglePlay(){
+    if(timer){ stopPlay(); return; }
+    if(!steps.length) return;
+    if(idx>=steps.length-1) idx=-1;
+    startBtn.textContent='Pause';
+    timer=setInterval(()=>{ if(idx>=steps.length-1){ stopPlay(); return; } next(); }, 480);
+  }
+  runBtn.addEventListener('click', run);
+  startBtn.addEventListener('click', togglePlay);
+  resetBtn.addEventListener('click', ()=>{ stopPlay(); idx=-1; render(); });
+  nextBtn.addEventListener('click', ()=>{ stopPlay(); next(); });
+  prevBtn.addEventListener('click', ()=>{ stopPlay(); prev(); });
+  run();
+})();
+</script>
+</body>
+</html>
