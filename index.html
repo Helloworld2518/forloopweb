@@ -155,6 +155,11 @@ footer{margin-top:24px;font-size:11.5px;color:var(--muted);text-align:center;}
         const body=parseBlock();
         return {type:'for', line:ln, initTxt, condTxt, updTxt, body};
       }
+      if(matchKw('while')){
+        consume('('); const condTxt=readUntil(')').trim(); consume(')');
+        const body=parseBlock();
+        return {type:'while', line:ln, condTxt, body};
+      }
       if(matchKw('if')){
         consume('('); const condTxt=readUntil(')').trim(); consume(')');
         const thenB=parseBlock(); let elseB=null;
@@ -206,6 +211,13 @@ footer{margin-top:24px;font-size:11.5px;color:var(--muted);text-align:center;}
         yield* execStatements(s.body, env);
         execRawStatement(s.updTxt, env);
         yield {line:s.line, note:'Update: '+s.updTxt};
+      }
+    } else if(s.type==='while'){
+      while(true){
+        const cond=evalExpr(s.condTxt, env);
+        yield {line:s.line, note:'Cek kondisi '+s.condTxt+' → '+(cond?'benar':'salah')};
+        if(!cond) break;
+        yield* execStatements(s.body, env);
       }
     } else if(s.type==='if'){
       const cond=evalExpr(s.condTxt, env);
